@@ -23,6 +23,9 @@ from PyQt4.QtOpenGL import QGLWidget
 import projectFile
 import sceneRender
 
+from shutil import which 
+from subprocess import call
+
 def timing(f):
     def wrap(*args):
         time1 = time.time()
@@ -1467,8 +1470,14 @@ class PrusaControlView(QMainWindow):
         self.help_menu.addSeparator()
         self.help_menu.addAction(self.tr("Send feedback"), self.controller.send_feedback)
         self.help_menu.addSeparator()
+        if("APPIMAGE" in os.environ) and (os.path.exists(os.getenv("APPIMAGE")) and (which("AppImageUpdate"))) :
+            self.help_menu.addAction(self.tr("Check for updates..."), self.check_for_updates)
         self.help_menu.addAction(self.tr('About'), self.controller.open_about)
         # Help menu
+        
+    def check_for_updates(self):
+        print("Running AppImageUpdate...")
+        call(["AppImageUpdate", os.getenv("APPIMAGE")])
 
     def reset_transformation_on_object(self, object_id):
         self.controller.reset_transformation_on_object(object_id)
@@ -2400,3 +2409,4 @@ class PrusaControlView(QMainWindow):
             #self.connect(slider, SIGNAL("valueChanged(int)"), setterSlot)
             slider.valueChanged.connect(setterSlot)
         return slider
+    
