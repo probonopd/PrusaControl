@@ -24,8 +24,6 @@ import projectFile
 import sceneRender
 
 from zeroconf import ServiceBrowser, Zeroconf
-from requests import post
-from socket import gethostbyname
     
 servers=[]
 
@@ -38,7 +36,6 @@ class MyListener(object):
         info = zeroconf.get_service_info(type, name)
         print("Service %s added, service info: %s" % (name, info))
         servers.append(info.server)
-        zeroconf.close()
 
 zeroconf = Zeroconf()
 listener = MyListener()
@@ -747,6 +744,8 @@ class PrinterInfoDialog(QDialog):
 class PrusaControlView(QMainWindow):
     def __init__(self, c):
         self.controller = c
+        
+        self.servers = servers
         super(PrusaControlView, self).__init__()
 
         #print("initialization of PrusaControlView")
@@ -1636,10 +1635,9 @@ class PrusaControlView(QMainWindow):
         self.generateButton.setText(self.tr("Save G-Code"))
         self.generateButton.setToolTip(self.tr("Save generated gcode file"))
 
-    if(len(servers)>0):
-        def set_send_gcode_button(self):
-            self.generateButton.setText(self.tr("Send G-Code"))
-            self.generateButton.setToolTip(self.tr("Send generated gcode file"))
+    def set_send_gcode_button(self):
+        self.generateButton.setText(self.tr("Send G-Code"))
+        self.generateButton.setToolTip(self.tr("Send generated gcode file"))
 
     def set_cancel_button(self):
         self.generateButton.setText(self.tr("Cancel"))
@@ -2140,7 +2138,8 @@ class PrusaControlView(QMainWindow):
 
     def open_gcode_view(self):
         self.set_save_gcode_button()
-        self.set_send_gcode_button()
+        if(len(servers)>0):
+            self.set_send_gcode_button()
         self.object_group_box.setVisible(False)
         self.gcode_group_box.setVisible(True)
         self.progressBar.setVisible(False)
