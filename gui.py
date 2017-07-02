@@ -23,6 +23,27 @@ from PyQt4.QtOpenGL import QGLWidget
 import projectFile
 import sceneRender
 
+from zeroconf import ServiceBrowser, Zeroconf
+from requests import post
+from socket import gethostbyname
+    
+servers=[]
+
+class MyListener(object):
+
+    def remove_service(self, zeroconf, type, name):
+        print("Service %s removed" % (name,))
+
+    def add_service(self, zeroconf, type, name):
+        info = zeroconf.get_service_info(type, name)
+        print("Service %s added, service info: %s" % (name, info))
+        servers.append(info.server)
+        zeroconf.close()
+
+zeroconf = Zeroconf()
+listener = MyListener()
+browser = ServiceBrowser(zeroconf, "_wirelessprint._tcp.local.", listener)
+
 def timing(f):
     def wrap(*args):
         time1 = time.time()
@@ -1043,7 +1064,6 @@ class PrusaControlView(QMainWindow):
         #self.materialCombo.setV
         #view = self.materialCombo.view()
 
-
         self.qualityLabel = QLabel()
         self.qualityLabel.setObjectName('qualityLabel')
         self.qualityCombo = QComboBox()
@@ -1068,7 +1088,6 @@ class PrusaControlView(QMainWindow):
         self.infillCombo.insertItems(len(infill_ls), infill_ls)
         self.infillCombo.setMaxVisibleItems(len(infill_ls))
 
-
         #self.supportCheckBox = QtGui.QCheckBox(self.tr("Support material"))
         self.supportLabel = QLabel()
         self.supportLabel.setObjectName('supportLabel')
@@ -1083,7 +1102,6 @@ class PrusaControlView(QMainWindow):
         self.brim_label.setObjectName('brim_label')
         self.brimCheckBox = QCheckBox("")
         self.brimCheckBox.setObjectName('brimCheckBox')
-
 
         #multimaterial settings
         self.materials_settings_l = QLabel()
@@ -1125,8 +1143,7 @@ class PrusaControlView(QMainWindow):
         self.extruder4_c.setCurrentIndex(first)
         self.extruder4_c.setObjectName("extruder4_c")
         # multimaterial settings
-
-
+        
         self.object_group_box.setLayout(self.create_object_settings_layout())
         self.object_group_box.setEnabled(False)
         self.transformation_reset_b = QPushButton("", self.object_group_box)
@@ -1138,10 +1155,8 @@ class PrusaControlView(QMainWindow):
         self.transformation_reset_b.setObjectName("transformation_reset_b")
         self.transformation_reset_b.clicked.connect(lambda: self.reset_transformation_on_object(self.get_object_id()))
 
-
         self.object_variable_layer_box.setLayout(self.create_object_advance_settings_layout())
         self.object_variable_layer_box.setVisible(False)
-
 
         self.gcode_group_box.setLayout(self.create_gcode_view_layout())
         self.gcode_group_box.setVisible(False)
@@ -1159,12 +1174,9 @@ class PrusaControlView(QMainWindow):
         self.generateButton.clicked.connect(self.controller.generate_button_pressed)
         self.generateButton.setEnabled(False)
 
-
-
         #self.right_panel_layout.setAlignment(Qt.AlignTop)
         printing_parameters_layout = QGridLayout()
         #printing_parameters_layout.setRowMinimumHeight(0, 65)
-
 
         printing_parameters_layout.addWidget(self.materials_settings_l, 0, 0, 1, 3)
         printing_parameters_layout.addWidget(self.extruder1_l, 1, 0)
@@ -1188,7 +1200,6 @@ class PrusaControlView(QMainWindow):
         printing_parameters_layout.addWidget(self.supportCombo, 10, 1, 1, 3)
         printing_parameters_layout.addWidget(self.brim_label, 11, 0)
         printing_parameters_layout.addWidget(self.brimCheckBox, 11, 1, 1, 3)
-
 
         self.right_panel_layout.addLayout(printing_parameters_layout)
 
@@ -1251,8 +1262,7 @@ class PrusaControlView(QMainWindow):
         #self.changable_widgets['brimCheckBox'] = self.brimCheckBox
         #self.changable_widgets['supportCheckBox'] = self.supportCheckBox
         #self.changable_widgets['supportCombo'] = self.supportCombo
-
-
+        
         self.qualityCombo.currentIndexChanged.connect(self.controller.scene_was_changed)
         #self.infillSlider.valueChanged.connect(self.controller.scene_was_changed)
         #self.supportCheckBox.clicked.connect(self.controller.scene_was_changed)
@@ -1283,7 +1293,6 @@ class PrusaControlView(QMainWindow):
                 print(scale * widget.maximumHeight())
                 widget.setFixedSize((int)(scale * widget.maximumWidth()), (int)(scale * widget.maximumHeight()))
 
-
     def set_default(self):
         _, first = self.controller.get_printer_materials_labels_ls(self.controller.actual_printer)
         self.materialCombo.setCurrentIndex(first)
@@ -1295,7 +1304,6 @@ class PrusaControlView(QMainWindow):
 
         self.brimCheckBox.setChecked(False)
         self.supportCombo.setCurrentIndex(0)
-
 
     def retranslateUI(self):
         self.name_l.setText(self.tr("Name"))
@@ -1368,9 +1376,6 @@ class PrusaControlView(QMainWindow):
 
         self.controller.create_messages()
 
-
-
-
     def set_multimaterial_gui_on(self, number_of_materials):
         self.materials_settings_l.setVisible(True)
         if number_of_materials==2:
@@ -1399,7 +1404,6 @@ class PrusaControlView(QMainWindow):
 
         self.materialCombo.setVisible(False)
         self.materialLabel.setVisible(False)
-
 
 
     def set_multimaterial_gui_off(self):
@@ -1490,7 +1494,6 @@ class PrusaControlView(QMainWindow):
 
         return msgBox.exec_()
 
-
     def show_exit_message_scene_not_saved(self):
         msgBox = QMessageBox(self)
         msgBox.setObjectName("msgBox")
@@ -1502,10 +1505,8 @@ class PrusaControlView(QMainWindow):
         msgBox.button(msgBox.Save).setText(self.tr("Save"))
         msgBox.button(msgBox.Discard).setText(self.tr("Discard"))
         msgBox.button(msgBox.Cancel).setText(self.tr("Cancel"))
-
-
+        
         return msgBox.exec_()
-
 
     def show_exit_message_generating_scene(self):
         msgBox = QMessageBox(self)
@@ -1593,7 +1594,6 @@ class PrusaControlView(QMainWindow):
 
         return False
 
-
     def place_on_zero_changed(self):
         if self.place_on_zero.isChecked():
             self.edit_pos_z.setDisabled(True)
@@ -1603,7 +1603,6 @@ class PrusaControlView(QMainWindow):
             self.update_scene()
         else:
             self.edit_pos_z.setDisabled(False)
-
 
     def eventFilter(self, source, event):
         if event.type() == QEvent.MouseMove:
@@ -1615,7 +1614,6 @@ class PrusaControlView(QMainWindow):
                     self.update_scene()
         return QMainWindow.eventFilter(self, source, event)
 
-
     def closeEvent(self, event):
         if self.controller.exit_event():
         #if self.exit_message_continue_exitting():
@@ -1624,7 +1622,6 @@ class PrusaControlView(QMainWindow):
             QMainWindow.closeEvent(self, event)
         else:
             event.ignore()
-
 
     def reinit(self):
         self.set_default()
@@ -1638,6 +1635,11 @@ class PrusaControlView(QMainWindow):
     def set_save_gcode_button(self):
         self.generateButton.setText(self.tr("Save G-Code"))
         self.generateButton.setToolTip(self.tr("Save generated gcode file"))
+
+    if(len(servers)>0):
+        def set_send_gcode_button(self):
+            self.generateButton.setText(self.tr("Send G-Code"))
+            self.generateButton.setToolTip(self.tr("Send generated gcode file"))
 
     def set_cancel_button(self):
         self.generateButton.setText(self.tr("Cancel"))
@@ -2138,6 +2140,7 @@ class PrusaControlView(QMainWindow):
 
     def open_gcode_view(self):
         self.set_save_gcode_button()
+        self.set_send_gcode_button()
         self.object_group_box.setVisible(False)
         self.gcode_group_box.setVisible(True)
         self.progressBar.setVisible(False)
@@ -2373,7 +2376,6 @@ class PrusaControlView(QMainWindow):
 
     def set_variable_layer_slider(self, val):
         self.controller.set_variable_layer_cursor(self.variable_layer_widget.double_value)
-
 
     def set_infill(self, val):
         self.infillValue = val
