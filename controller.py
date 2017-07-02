@@ -39,6 +39,9 @@ from copy import deepcopy
 #Mesure
 from slicer import SlicerEngineManager
 
+from requests import post
+from socket import gethostbyname
+
 __author__ = 'Tibor Vavra'
 
 def timing(f):
@@ -681,8 +684,17 @@ class Controller(QObject):
             self.show_message_on_status_bar("")
         elif self.status == 'generated':
             #already generated
-            self.save_gcode_file()
+            if(len(self.view.servers)>0):
+                self.send_gcode_file()
+            else:
+                self.save_gcode_file()
 
+    def send_gcode_file(self):
+        url = "http://" + self.view.servers[0] + "/print" # TODO: Select one of many
+        print("Sending to %s..." % (url))
+        files = {'file': open('/tmp/out.gcode', 'rb')}
+        r = post(url, files=files)
+        print("Sent")
 
     def cancel_gcode_loading(self):
         self.gcode.cancel_parsing_gcode()
@@ -692,7 +704,6 @@ class Controller(QObject):
         self.set_generate_button()
         self.set_progress_bar(0)
         print("Cancel gcode loading end")
-
 
     #TODO:Better way
     def generate_gcode_filename(self):
