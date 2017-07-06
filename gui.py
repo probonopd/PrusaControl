@@ -23,7 +23,7 @@ from PyQt4.QtOpenGL import QGLWidget
 import projectFile
 import sceneRender
 
-from zeroconf import ServiceBrowser, Zeroconf
+from zeroconf import ServiceBrowser, Zeroconf, ServiceInfo
     
 servers=[]
 
@@ -35,7 +35,26 @@ class MyListener(object):
     def add_service(self, zeroconf, type, name):
         info = zeroconf.get_service_info(type, name)
         print("Service %s added, service info: %s" % (name, info))
-        servers.append(info.server)
+
+        # Try zeroconf cache first
+        info = ServiceInfo(type, name, properties = {})
+        for record in zeroconf.cache.entries_with_name(name.lower()):
+            info.update_record(zeroconf, time.time(), record)
+        for record in zeroconf.cache.entries_with_name(info.server):
+            info.update_record(zeroconf, time.time(), record)
+            if info.address and info.address[:2] != b'\xa9\xfe': # 169.254.x.x addresses are self-assigned; reject them
+                break
+        # Request more data if info from cache is not complete
+        if not info.address or not info.port:
+            info = zeroconf.get_service_info(type, name)
+            if not info:
+                print("Could not get information about %s" % name)
+                return
+        if info.address and info.port:
+            address = '.'.join(map(lambda n: str(n), info.address))
+            
+        servers.append(address)
+        print(servers)
 
 zeroconf = Zeroconf()
 listener = MyListener()
