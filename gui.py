@@ -1655,8 +1655,8 @@ class PrusaControlView(QMainWindow):
         self.generateButton.setToolTip(self.tr("Save generated gcode file"))
 
     def set_send_gcode_button(self):
-        self.generateButton.setText(self.tr("Send G-Code"))
-        self.generateButton.setToolTip(self.tr("Send generated gcode file"))
+        self.generateButton.setText(self.tr("Print on %s" % servers[0]))
+        self.generateButton.setToolTip(self.tr("Send generated gcode file to printer at %s" % servers[0]))
 
     def set_cancel_button(self):
         self.generateButton.setText(self.tr("Cancel"))
