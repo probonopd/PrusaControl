@@ -28,10 +28,16 @@ from zeroconf import ServiceBrowser, Zeroconf, ServiceInfo
 servers=[]
 
 class MyListener(object):
+    
+    def __init__(self, controlview):
+        self.controlview = controlview
 
     def remove_service(self, zeroconf, type, name):
         print("Service %s removed" % (name,))
-
+        print("FIXME: Remove printer from dropdown menu here")
+        # self.controlview.printerCombo.removeItem(???) # FIXME: Remove the correct one
+        # Do we ever get remove_service notices when a printer is shut down?
+        
     def add_service(self, zeroconf, type, name):
         info = zeroconf.get_service_info(type, name)
         print("Service %s added, service info: %s" % (name, info))
@@ -54,11 +60,14 @@ class MyListener(object):
             address = '.'.join(map(lambda n: str(n), info.address))
             
         servers.append(address)
-        print(servers)
 
-zeroconf = Zeroconf()
-listener = MyListener()
-browser = ServiceBrowser(zeroconf, "_wirelessprint._tcp.local.", listener)
+        self.controlview.printerCombo.addItem(address)
+        print(self.controlview.printerCombo.currentIndex)
+        if len(servers) == 1:
+            self.controlview.printerCombo.setCurrentIndex(0)
+        self.controlview.printerCombo.setMaxVisibleItems(len(servers))
+
+    print(servers)
 
 def timing(f):
     def wrap(*args):
@@ -765,6 +774,10 @@ class PrusaControlView(QMainWindow):
         self.controller = c
         
         self.servers = servers
+        zeroconf = Zeroconf()
+        listener = MyListener(self)
+        browser = ServiceBrowser(zeroconf, "_wirelessprint._tcp.local.", listener)
+        
         super(PrusaControlView, self).__init__()
 
         #print("initialization of PrusaControlView")
@@ -1067,6 +1080,15 @@ class PrusaControlView(QMainWindow):
 
         self.printer_settings_l = QLabel()
         self.printer_settings_l.setObjectName('printer_settings_l')
+
+        # printer tab
+        self.printerLabel = QLabel()
+        self.printerLabel.setObjectName('printerLabel')
+        self.printerCombo = QComboBox()
+        if self.controller.app_config.system_platform in ['Linux']:
+            self.printerCombo.setStyle(QStyleFactory.create('Windows'))
+        self.printerCombo.setObjectName('printerCombo')
+        
         # print tab
         self.materialLabel = QLabel()
         self.materialLabel.setObjectName('materialLabel')
@@ -1079,8 +1101,6 @@ class PrusaControlView(QMainWindow):
         self.materialCombo.setCurrentIndex(first)
         self.materialCombo.currentIndexChanged.connect(self.controller.update_gui)
         self.materialCombo.setMaxVisibleItems(len(material_label_ls))
-        #self.materialCombo.setV
-        #view = self.materialCombo.view()
 
         self.qualityLabel = QLabel()
         self.qualityLabel.setObjectName('qualityLabel')
@@ -1226,7 +1246,10 @@ class PrusaControlView(QMainWindow):
         self.right_panel_layout.addWidget(self.gcode_group_box)
         self.right_panel_layout.addStretch()
         #self.right_panel_layout.addItem(QtGui.QSpacerItem(0, 0, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding))
-
+        
+        # self.right_panel_layout.addWidget(self.printerLabel)
+        self.right_panel_layout.addWidget(self.printerCombo)
+        
         self.right_panel_layout.addWidget(self.generateButton)
         self.right_panel_layout.addWidget(self.progressBar)
         self.right_panel_layout.addWidget(self.gcode_back_b)
@@ -1655,8 +1678,8 @@ class PrusaControlView(QMainWindow):
         self.generateButton.setToolTip(self.tr("Save generated gcode file"))
 
     def set_send_gcode_button(self):
-        self.generateButton.setText(self.tr("Print on %s" % servers[0]))
-        self.generateButton.setToolTip(self.tr("Send generated gcode file to printer at %s" % servers[0]))
+        self.generateButton.setText(self.tr("Send G-Code"))
+        self.generateButton.setToolTip(self.tr("Send generated gcode file"))
 
     def set_cancel_button(self):
         self.generateButton.setText(self.tr("Cancel"))
