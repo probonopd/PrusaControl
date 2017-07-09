@@ -25,6 +25,7 @@ Some features are still in development
 - pyrr (0.8.3)
 - PyOpenGL (3.1.0)
 - PyOpenGL-accelerate (3.1.0)
+- zeroconf (0.19.1)
 - Slic3r PE (>=1.31.2)
 
 - pyobjc (3.2.1) on Os X platform
