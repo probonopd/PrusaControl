@@ -776,7 +776,7 @@ class PrusaControlView(QMainWindow):
         self.servers = servers
         zeroconf = Zeroconf()
         listener = MyListener(self)
-        browser = ServiceBrowser(zeroconf, "_wirelessprint._tcp.local.", listener)
+        browser = ServiceBrowser(zeroconf, "_octoprint._tcp.local.", listener)
         
         super(PrusaControlView, self).__init__()
 
